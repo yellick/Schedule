@@ -1,119 +1,177 @@
 import React, { useState } from 'react';
-import { Text, StyleSheet, View, Modal, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from 'react-native-web';
-import { AntDesign } from '@expo/vector-icons';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
 
 const ProfilePage = () => {
-  const userName = "Губанов Михаил Сергеевич";
-  const userEmail = "22201003@live.preco.ru";
-  const [modalVisible, setModalVisible] = useState(false);
+  const { user, logout } = useAuth();
   const navigation = useNavigation();
+  const [modalVisible, setModalVisible] = useState(false);
 
-  function exitBtnClick() {
-    setModalVisible(true);
-  }
-
-  function confirmExit() {
+  const handleLogout = async () => {
+    await logout();
     setModalVisible(false);
     navigation.navigate('Auth');
-  }
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View>
-        <Text style={styles.name}>{userName}</Text>
-        <Text style={styles.email}>{userEmail}</Text>
+    <View style={styles.container}>
+      {/* Основная информация */}
+      <View style={styles.profileCard}>
+        <View style={styles.userInfo}>
+          <Ionicons name="person-circle" size={80} color="#5786ff" />
+          <Text style={styles.userName}>{user?.name || 'Губанов М.С.'}</Text>
+          <Text style={styles.userEmail}>{user?.email || '22201003@live.preco.ru'}</Text>
+        </View>
       </View>
-      <Button title="Выйти из аккаунта" onPress={exitBtnClick} color='#f66' />
+
+      {/* Кнопка выхода */}
+      <TouchableOpacity 
+        style={styles.logoutButton}
+        onPress={() => setModalVisible(true)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.logoutText}>Выйти из аккаунта</Text>
+        <Ionicons name="exit-outline" size={24} color="#f66" />
+      </TouchableOpacity>
+
+      {/* Модальное окно подтверждения */}
       <Modal
         animationType="fade"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
+        onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Pressable style={styles.closeButton} onPress={() => setModalVisible(!modalVisible)}>
-              <AntDesign name="close" size={24} color="black" />
-            </Pressable>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Подтверждение выхода</Text>
             <Text style={styles.modalText}>Вы уверены, что хотите выйти из аккаунта?</Text>
-            <Pressable style={[styles.button, styles.buttonConfirm]} onPress={confirmExit}>
-              <Text style={styles.textStyle}>ПОДТВЕРДИТЬ</Text>
-            </Pressable>
+            
+            <View style={styles.modalButtons}>
+              <Pressable 
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Отмена</Text>
+              </Pressable>
+              
+              <Pressable 
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleLogout}
+              >
+                <Text style={styles.confirmButtonText}>Выйти</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
+    backgroundColor: '#f8f9fa',
+    padding: 20,
     justifyContent: 'space-between',
   },
-  name: {
-    fontSize: 20,
-    color: "black",
-    marginBottom: 20,
+  profileCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 30,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+    marginTop: 40,
   },
-  email: {
+  userInfo: {
+    alignItems: 'center',
+  },
+  userName: {
+    fontSize: 22,
+    fontWeight: '600',
+    marginTop: 20,
+    marginBottom: 5,
+    color: '#333',
+    textAlign: 'center',
+  },
+  userEmail: {
     fontSize: 16,
-    color: "#0078ff",
-    marginBottom: 20,
+    color: '#666',
+    textAlign: 'center',
   },
-  centeredView: {
+  logoutButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#f66',
+    borderRadius: 12,
+    paddingVertical: 15,
+    marginBottom: 30,
+  },
+  logoutText: {
+    color: '#f66',
+    fontSize: 16,
+    fontWeight: '500',
+    marginRight: 10,
+  },
+  modalOverlay: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  modalView: {
-    margin: 20,
-    backgroundColor: "white",
-    padding: 10,
-    paddingTop: 40,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    position: 'relative',
-    borderRadius: 0,
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
   },
-  closeButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-  },
-  button: {
-    padding: 10,
-    paddingHorizontal: 20,
-    elevation: 2,
-    borderRadius: 0,
-  },
-  buttonConfirm: {
-    backgroundColor: "#f66",
-  },
-  textStyle: {
-    color: "white",
-    fontWeight: "bold",
-    textAlign: "center"
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 10,
   },
   modalText: {
-    fontSize: 18,
-    marginBottom: 15,
-    textAlign: "center"
-  }
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#666',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+  },
+  confirmButton: {
+    backgroundColor: '#f66',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: '500',
+  },
+  confirmButtonText: {
+    color: '#fff',
+    fontWeight: '500',
+  },
 });
 
 export default ProfilePage;
