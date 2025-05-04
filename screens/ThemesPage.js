@@ -30,7 +30,6 @@ const ThemesPage = () => {
         });
 
         const result = await response.json();
-        console.log('Ответ сервера:', result);
 
         if (result.code === 0) {
           setThemes(result.response.themes || []);

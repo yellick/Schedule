@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { GroupProvider } from './context/GroupContext';
 import AuthPage from './screens/AuthPage';
 import SchedulePage from './screens/SchedulePage';
 import ProfilePage from './screens/ProfilePage';
@@ -73,9 +74,11 @@ function AuthNavigator() {
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer>
-        <AuthNavigator />
-      </NavigationContainer>
+      <GroupProvider>
+        <NavigationContainer>
+          <AuthNavigator />
+        </NavigationContainer>
+      </GroupProvider>
     </AuthProvider>
   );
 }

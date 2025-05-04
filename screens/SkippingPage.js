@@ -139,7 +139,6 @@ const SkippingPage = () => {
 
   return (
     <View style={styles.container}>
-      {/* Выбор года и месяца */}
       <View style={styles.selectorContainer}>
         <Text style={styles.label}>Год:</Text>
         {Platform.OS === 'web' ? (
@@ -212,7 +211,6 @@ const SkippingPage = () => {
         )}
       </View>
 
-      {/* Таблица с равными колонками */}
       <ScrollView style={styles.content}>
         {filteredData.length > 0 ? (
           <View style={styles.tableContainer}>
@@ -278,23 +276,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: 'bold',
   },
-  // Стиль для мобильных Picker'ов
   pickerWrapper: {
-    // Убираем только границу, сохраняя фон
     backgroundColor: '#fff',
   },
   picker: {
-    // Убираем только границу
     borderWidth: 0,
   },
-  // Стиль для веб-версии (select)
   webSelect: {
     width: '100%',
     fontSize: 16,
     padding: 8,
-    border: 'none', // Убираем только границу
-    backgroundColor: '#fff', // Сохраняем фон
-    // Сохраняем стандартные стрелочки
+    border: 'none',
+    backgroundColor: '#fff',
     appearance: 'menulist',
     outline: 'none',
   },

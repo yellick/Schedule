@@ -4,174 +4,38 @@ import { Picker } from '@react-native-picker/picker';
 import DaySchedule from './DaySchedule';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { useGroup } from '../context/GroupContext';
 
 const SchedulePage = () => {
   const [groups, setGroups] = useState([]);
-  const [selectedGroupId, setSelectedGroupId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigation = useNavigation();
+  const [data, setData] = useState([]);
+  const { selectedGroup, updateGroup } = useGroup();
 
-  const [data, setData] = useState([
-    {
-      date: "ПН. 20.01.2025",
-      lessons: [
-        {
-          pair: "4 пара",
-          time: "13:50 - 15:20",
-          subject: "МДК.02.02",
-          teacher: "А Блинов А.",
-          room: "В. 217"
-        },
-        {
-          pair: "5 пара",
-          time: "15:30 - 17:00",
-          subject: "МДК.02.02",
-          teacher: "А Блинов А.",
-          room: "В. 217"
-        },
-        {
-          pair: "6 пара",
-          time: "17:10 - 18:20",
-          subject: "МДК.02.02",
-          teacher: "А Блинов А.",
-          room: "В. 217"
-        }
-      ]
-    },
-    {
-      date: "ВТ. 21.01.2025",
-      lessons: [
-        {
-          pair: "5 пара",
-          time: "15:30 - 17:00",
-          subject: "МДК.02.02",
-          teacher: "А Блинов А.",
-          room: "В. 217"
-        },
-        {
-          pair: "6 пара",
-          time: "17:10 - 18:20",
-          subject: "МДК.02.02",
-          teacher: "А Блинов А.",
-          room: "В. 217"
-        }
-      ]
-    },
-    {
-      date: "ЧТ. 23.01.2025",
-      lessons: [
-        {
-          pair: "3 пара",
-          time: "12:00 - 13:30",
-          subject: "Ин.яз",
-          teacher: "А Ещеркина Л.В.",
-          room: "422"
-        },
-        {
-          pair: "4 пара",
-          time: "13:50 - 15:20",
-          subject: "Физ-ра",
-          teacher: "А Тютин А.А.",
-          room: "Спортзал"
-        },
-        {
-          pair: "5 пара",
-          time: "15:30 - 17:00",
-          subject: "МДК.01.04",
-          teacher: "А Гапчук",
-          room: "А.А. 217"
-        },
-        {
-          pair: "6 пара",
-          time: "17:10 - 18:20",
-          subject: "МДК.01.04",
-          teacher: "А Гапчук",
-          room: "А.А. 217"
-        }
-      ]
-    },
-    {
-      date: "ПТ. 24.01.2025",
-      lessons: [
-        {
-          pair: "2 пара",
-          time: "10:10 - 11:40",
-          subject: "МДК.01.03",
-          teacher: "А Гапчук",
-          room: "А.А. 217"
-        },
-        {
-          pair: "3 пара",
-          time: "12:00 - 13:30",
-          subject: "МДК.01.03",
-          teacher: "А Гапчук",
-          room: "А.А. 217"
-        },
-        {
-          pair: "4 пара",
-          time: "13:50 - 15:20",
-          subject: "МДК.01.04",
-          teacher: "А Гапчук",
-          room: "А.А. 217"
-        },
-        {
-          pair: "5 пара",
-          time: "15:30 - 17:00",
-          subject: "МДК.01.04",
-          teacher: "А Гапчук",
-          room: "А.А. 217"
-        }
-      ]
-    },
-    {
-      date: "СБ. 25.01.2025",
-      lessons: [
-        {
-          pair: "4 пара",
-          time: "13:50 - 15:20",
-          subject: "МДК.01.03",
-          teacher: "А Гапчук",
-          room: "А.А. 419"
-        },
-        {
-          pair: "5 пара",
-          time: "15:30 - 17:00",
-          subject: "МДК.01.03",
-          teacher: "А Гапчук",
-          room: "А.А. 419"
-        }
-      ]
-    },
-    {
-      date: "ПН. 27.01.2025",
-      lessons: [
-        {
-          pair: "4 пара",
-          time: "13:50 - 15:20",
-          subject: "МДК.02.02",
-          teacher: "А Блинов А.",
-          room: "В. 217"
-        },
-        {
-          pair: "5 пара",
-          time: "15:30 - 17:00",
-          subject: "МДК.02.02",
-          teacher: "А Блинов А.",
-          room: "В. 217"
-        },
-        {
-          pair: "6 пара",
-          time: "17:10 - 18:20",
-          subject: "МДК.02.02",
-          teacher: "А Блинов А.",
-          room: "В. 217"
-        }
-      ]
+  const transformScheduleData = (apiData) => {
+    return apiData.map(day => ({
+      date: day.date,
+      lessons: day.lessons.map(lesson => ({
+        pair: `${lesson.lesson_num} пара`,
+        time: `${lesson.time_from} - ${lesson.time_to}`,
+        subject: lesson.lesson_name,
+        teacher: lesson.teacher,
+        room: lesson.room
+      }))
+    }));
+  };
+
+  const showError = (message) => {
+    if (Platform.OS === 'web') {
+      console.error('Ошибка:', message);
+      alert(`Ошибка: ${message}`);
+    } else {
+      Alert.alert('Ошибка', message);
     }
-  ]); // Ваши тестовые данные
+  };
 
-  // Загрузка списка групп
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -189,14 +53,17 @@ const SchedulePage = () => {
         if (result.code === 0) {
           setGroups(result.response.groups);
           if (result.response.groups.length > 0) {
-            setSelectedGroupId(result.response.groups[0].id);
+            const initialGroup = selectedGroup || result.response.groups[0];
+            updateGroup(initialGroup);
           }
         } else if (result.code === 1) {
+          showError(result.message || 'Ошибка при загрузке групп');
           await logout();
           navigation.navigate('Auth');
         }
       } catch (error) {
         console.error('Ошибка:', error);
+        showError('Ошибка сети при загрузке групп');
       } finally {
         setIsLoading(false);
       }
@@ -204,31 +71,58 @@ const SchedulePage = () => {
 
     fetchGroups();
   }, []);
-  
-  
+
+  useEffect(() => {
+    if (!selectedGroup?.id || !user?.id) return;
+
+    const fetchSchedule = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('https://schapi.ru/schedule', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            u_id: user.id,
+            group_id: selectedGroup.id
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.code === 0) {
+          const transformedData = transformScheduleData(result.response.schedule);
+          setData(transformedData);
+        } else if (result.code === 1) {
+          showError(result.message || 'Ошибка при загрузке расписания');
+          await logout();
+          navigation.navigate('Auth');
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки расписания:', error);
+        showError('Ошибка сети при загрузке расписания');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSchedule();
+  }, [selectedGroup?.id, user?.id]);
+
   const handleGroupSelect = (groupId) => {
-    setSelectedGroupId(groupId);
-    console.log('Выбрана группа:', groupId);
+    const group = groups.find(g => g.id === groupId);
+    if (group) updateGroup(group);
   };
 
-  const showAlert = (title, message) => {
-    if (Platform.OS === 'web') {
-      alert(`${title}: ${message}`);
-    } else {
-      Alert.alert(title, message);
-    }
-  };
-
-  // Рендер выбора группы (универсальный)
   const renderGroupSelector = () => {
     if (isLoading) return <Text>Загрузка...</Text>;
-
     if (groups.length === 0) return <Text>Нет доступных групп</Text>;
 
     if (Platform.OS === 'web') {
       return (
         <select
-          value={selectedGroupId || ''}
+          value={selectedGroup?.id || ''}
           onChange={(e) => handleGroupSelect(Number(e.target.value))}
           style={styles.webSelect}
         >
@@ -243,7 +137,7 @@ const SchedulePage = () => {
       return (
         <View style={styles.pickerContainer}>
           <Picker
-            selectedValue={selectedGroupId}
+            selectedValue={selectedGroup?.id}
             onValueChange={handleGroupSelect}
             dropdownIconColor="#5786ff"
           >
@@ -262,17 +156,23 @@ const SchedulePage = () => {
 
   return (
     <View style={styles.container}>
-      {/* Универсальный селектор групп */}
       <View style={styles.selectorContainer}>
         <Text style={styles.label}>Выберите группу:</Text>
         {renderGroupSelector()}
       </View>
 
-      {/* Расписание */}
       <ScrollView style={styles.scheduleContainer}>
-        {data.map((day, index) => (
-          <DaySchedule key={index} date={day.date} lessons={day.lessons} />
-        ))}
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <Text>Загрузка расписания...</Text>
+          </View>
+        ) : data.length > 0 ? (
+          data.map((day, index) => (
+            <DaySchedule key={index} date={day.date} lessons={day.lessons} />
+          ))
+        ) : (
+          <Text style={styles.noDataText}>Нет данных о расписании</Text>
+        )}
       </ScrollView>
     </View>
   );
@@ -295,7 +195,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
-    overflow: 'hidden', // Для скругления углов на Android
+    overflow: 'hidden',
   },
   webSelect: {
     width: '100%',
@@ -307,6 +207,18 @@ const styles = StyleSheet.create({
   },
   scheduleContainer: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noDataText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: '#666',
   },
 });
 

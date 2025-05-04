@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
+import { useGroup } from '../context/GroupContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const ProfilePage = () => {
   const { user, logout } = useAuth();
+  const { updateGroup } = useGroup();
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleLogout = async () => {
+    await updateGroup(null);
     await logout();
     setModalVisible(false);
     navigation.navigate('Auth');
@@ -17,7 +20,6 @@ const ProfilePage = () => {
 
   return (
     <View style={styles.container}>
-      {/* Основная информация */}
       <View style={styles.profileCard}>
         <View style={styles.userInfo}>
           <Ionicons name="person-circle" size={80} color="#5786ff" />
@@ -26,7 +28,6 @@ const ProfilePage = () => {
         </View>
       </View>
 
-      {/* Кнопка выхода */}
       <TouchableOpacity 
         style={styles.logoutButton}
         onPress={() => setModalVisible(true)}
@@ -36,7 +37,6 @@ const ProfilePage = () => {
         <Ionicons name="exit-outline" size={24} color="#f66" />
       </TouchableOpacity>
 
-      {/* Модальное окно подтверждения */}
       <Modal
         animationType="fade"
         transparent={true}
