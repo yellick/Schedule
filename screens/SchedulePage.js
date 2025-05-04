@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert, Text, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Alert,
+  Text,
+  Platform,
+  ActivityIndicator
+} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DaySchedule from './DaySchedule';
 import { useAuth } from '../context/AuthContext';
@@ -12,7 +20,9 @@ const SchedulePage = () => {
   const { user, logout } = useAuth();
   const navigation = useNavigation();
   const [data, setData] = useState([]);
-  const { selectedGroup, updateGroup } = useGroup();
+  const { selectedGroup, updateGroup, isLoading: groupLoading } = useGroup();
+  const [showDelayedLoading, setShowDelayedLoading] = useState(false);
+  const timeoutRef = useRef(null);
 
   const transformScheduleData = (apiData) => {
     return apiData.map(day => ({
@@ -52,10 +62,6 @@ const SchedulePage = () => {
 
         if (result.code === 0) {
           setGroups(result.response.groups);
-          if (result.response.groups.length > 0) {
-            const initialGroup = selectedGroup || result.response.groups[0];
-            updateGroup(initialGroup);
-          }
         } else if (result.code === 1) {
           showError(result.message || 'Ошибка при загрузке групп');
           await logout();
@@ -78,6 +84,13 @@ const SchedulePage = () => {
     const fetchSchedule = async () => {
       try {
         setIsLoading(true);
+        setShowDelayedLoading(false);
+        
+        // Запускаем таймер для отложенного сообщения
+        timeoutRef.current = setTimeout(() => {
+          setShowDelayedLoading(true);
+        }, 3000);
+
         const response = await fetch('https://schapi.ru/schedule', {
           method: 'POST',
           headers: {
@@ -103,16 +116,24 @@ const SchedulePage = () => {
         console.error('Ошибка загрузки расписания:', error);
         showError('Ошибка сети при загрузке расписания');
       } finally {
+        clearTimeout(timeoutRef.current);
         setIsLoading(false);
+        setShowDelayedLoading(false);
       }
     };
 
     fetchSchedule();
+
+    return () => {
+      clearTimeout(timeoutRef.current);
+    };
   }, [selectedGroup?.id, user?.id]);
 
   const handleGroupSelect = (groupId) => {
     const group = groups.find(g => g.id === groupId);
-    if (group) updateGroup(group);
+    if (group && group.id !== selectedGroup?.id) {
+      updateGroup(group);
+    }
   };
 
   const renderGroupSelector = () => {
@@ -126,6 +147,9 @@ const SchedulePage = () => {
           onChange={(e) => handleGroupSelect(Number(e.target.value))}
           style={styles.webSelect}
         >
+          <option value="" disabled hidden>
+            {selectedGroup ? selectedGroup.name : 'Выберите группу'}
+          </option>
           {groups.map((group) => (
             <option key={group.id} value={group.id}>
               {group.name}
@@ -137,10 +161,16 @@ const SchedulePage = () => {
       return (
         <View style={styles.pickerContainer}>
           <Picker
-            selectedValue={selectedGroup?.id}
+            selectedValue={selectedGroup?.id || ''}
             onValueChange={handleGroupSelect}
             dropdownIconColor="#5786ff"
           >
+            <Picker.Item
+              label={selectedGroup ? selectedGroup.name : 'Выберите группу'}
+              value=""
+              enabled={false}
+              style={styles.placeholderText}
+            />
             {groups.map((group) => (
               <Picker.Item
                 key={group.id}
@@ -162,16 +192,31 @@ const SchedulePage = () => {
       </View>
 
       <ScrollView style={styles.scheduleContainer}>
-        {isLoading ? (
+        {groupLoading ? (
           <View style={styles.loadingContainer}>
-            <Text>Загрузка расписания...</Text>
+            <ActivityIndicator size="large" color="#5786ff" />
           </View>
-        ) : data.length > 0 ? (
-          data.map((day, index) => (
-            <DaySchedule key={index} date={day.date} lessons={day.lessons} />
-          ))
+        ) : !selectedGroup ? (
+          <Text style={styles.noDataText}>Пожалуйста, выберите группу</Text>
         ) : (
-          <Text style={styles.noDataText}>Нет данных о расписании</Text>
+          <>
+            {isLoading && showDelayedLoading && (
+              <View style={styles.loadingMessage}>
+                <Text style={styles.loadingText}>
+                  Данные загружаются, пожалуйста подождите...
+                </Text>
+                <ActivityIndicator size="small" color="#5786ff" />
+              </View>
+            )}
+
+            {!isLoading && data.length > 0 ? (
+              data.map((day, index) => (
+                <DaySchedule key={index} date={day.date} lessons={day.lessons} />
+              ))
+            ) : (
+              <Text style={styles.noDataText}>Нет данных о расписании</Text>
+            )}
+          </>
         )}
       </ScrollView>
     </View>
@@ -182,6 +227,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  placeholderText: {
+    color: '#999',
   },
   selectorContainer: {
     marginBottom: 20,
@@ -219,6 +267,20 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#666',
+  },
+  loadingMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
+    backgroundColor: '#f0f4ff',
+    borderRadius: 8,
+    margin: 10,
+  },
+  loadingText: {
+    color: '#5786ff',
+    marginRight: 10,
+    fontSize: 14,
   },
 });
 
