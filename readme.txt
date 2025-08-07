@@ -1,7 +1,3 @@
-C:\Users\admin\Desktop\vkr\Schedule
-D:\URC-vkr\Schedule
-H:\Desktop\URC-vkr\Schedule
-
 Библиотеки:
 
 npm install @expo/metro-runtime@~4.0.0
